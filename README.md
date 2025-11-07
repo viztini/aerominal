@@ -2,7 +2,7 @@
 
 ![aerominal Banner](./banner.png)
 
-# aerominal Terminal [STILL IN DEVELOPMENT]
+# aerominal terminal emulator [ALPHA]
 
 ## Development Status
 
