@@ -1,3 +1,7 @@
+# aerominal
+
+![aerominal Banner](./banner.png)
+
 # aerominal Terminal [STILL IN DEVELOPMENT]
 
 ## Development Status
