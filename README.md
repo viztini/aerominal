@@ -37,6 +37,8 @@ A lightweight, customizable terminal emulator built with Python and Tkinter. Fea
 
 ## Installation
 
+### Download Latest Release
+
 ### Run from Source
 ```bash
 python aerominal.py
