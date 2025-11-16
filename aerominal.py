@@ -241,7 +241,7 @@ class AerominalTerminal:
         # Current directory (right)
         self.dir_label = tk.Label(
             status_frame,
-            text=f"📁 {os.getcwd()}",
+            text=f"{os.getcwd()}",
             bg=self.config.theme['background'],
             fg=self.config.theme['status_color'],
             font=(self.config.font_family, self.config.font_size - 2)
@@ -424,7 +424,7 @@ class AerominalTerminal:
         """Update status bar information"""
         try:
             current_dir = os.getcwd()
-            self.dir_label.config(text=f"📁 {current_dir}")
+            self.dir_label.config(text=f"{current_dir}")
         except:
             pass
             
@@ -542,4 +542,5 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
+
     main()
