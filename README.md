@@ -8,7 +8,7 @@
 
 **Alpha Build** - This is an early development version of aerominal. Features may be incomplete and stability is not guaranteed. Please report any issues you encounter.
 
-A Modern, Transparent Terminal Emulator for Windows
+A Modern, Transparent Terminal Emulator for Windows (Soon to be avaliable for Linux and macOS)
 
 ## Overview
 
@@ -136,9 +136,10 @@ This project is open source. You're encouraged to:
 - Create and share custom themes
 - Improve the functionality
 - Fix bugs and issues
+- Port it to different OSes
 
 The code is structured to be easily modifiable, particularly the theme system in `themes.py` and the main application logic in `aerominal.py`.
 
 ---
 
-aerominal Terminal - Clean, customizable terminal emulator for Windows
+aerominal Terminal - Clean, customizable terminal emulator
