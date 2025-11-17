@@ -53,6 +53,13 @@ It features a clean, transparent interface with theme support and modern UI aest
 
 (Windows only at the moment)
 
+### Clone the GitHub Repo
+
+```bash
+git clone https://github.com/viztini/aerominal
+cd aerominal
+```
+
 ### Run from Source (Linux / Cross-Platform)
 
 ```bash
