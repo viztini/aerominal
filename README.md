@@ -36,7 +36,7 @@ aerominal is a customizable terminal emulator built with Python and Tkinter.
     pip install -r requirements.txt
     ```
 
-Or just downlaod the Windows executables.
+Or just downlood the Windows executables.
 
 ## Usage
 
