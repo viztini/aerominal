@@ -1,202 +1,77 @@
-# aerominal
-
 ![aerominal Banner](./banner.png)
 
-# aerominal Terminal Emulator [ALPHA]
+### aerominal
 
-## Development Status
-
-**Alpha Build** — This is an early development version of **aerominal**.
-Features may be incomplete and stability is not guaranteed.
-Please report any issues you encounter.
-
-A modern, transparent terminal emulator for **Windows** and **Linux**
-(macOS support is possible but currently untested).
-
----
-
-## Overview
-
-aerominal is a lightweight and customizable terminal emulator built with **Python** and **Tkinter**.
-It features a clean, transparent interface with theme support and modern UI aesthetics.
-
----
+aerominal is a customizable terminal emulator built with Python and Tkinter.
 
 ## Features
 
-* **Transparent Background** — Adjustable opacity with acrylic-style blur effects
-* **Custom Themes** — Multiple built-in color schemes, easily extendable with your own
-* **Lightweight** — Minimal resource usage, powered by Python and Tkinter
-* **Hidden CMD Process (Windows)** — Executes commands without showing a console window
-* **Themed Title Bar** — Title bar colors adapt to the selected theme
-* **Clean Interface** — No visible scrollbar (scroll with mouse wheel)
-* **Right-Click Context Menu** — Quick access to themes, settings, and opacity controls
-
----
-
-## Keyboard Shortcuts
-
-* `Ctrl + L` — Clear terminal output
-* `Ctrl + C` — Copy selected text
-* `Ctrl + V` — Paste into input
-* `Ctrl + Q` — Exit application
-* `Up / Down` — Navigate command history
-* `Enter` — Execute command
-
-*More shortcuts planned for future updates.*
-
----
+*   Customizable themes (including new Neon Genesis Evangelion inspired themes!)
+*   Adjustable opacity
+*   Configurable font family and size
+*   Adjustable window dimensions (width, height)
+*   Option to start maximized
+*   Configurable default shell path
+*   First-run setup for auto-update preference (auto-update feature is currently non-functional)
+*   Displays basic system information (configurable to show on startup)
+*   **Scrollable Settings Window:** All settings are now accessible via a scrollable window.
+*   **Improved Context Menu:** The right-click context menu now dismisses automatically when clicking outside of it.
+*   **Live Time Display:** The bottom right of the status bar now displays the current time, updated every second.
+*   **Persistent Input Focus:** The input bar automatically regains focus when the application window is reactivated, so you don't have to click it to type commands.
 
 ## Installation
 
-### Download Latest Release
+1.  Clone this repository:
+    ```bash
+    git clone https://github.com/your-username/aerominal.git
+    cd aerominal
+    ```
+2.  Create and activate a virtual environment:
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-(Windows only at the moment)
-
-### Clone the GitHub Repo
-
-```bash
-git clone https://github.com/viztini/aerominal
-cd aerominal
-```
-
-### Run from Source (Linux / Cross-Platform)
-
-```bash
-python aerominal.py
-```
-
-### Build an Executable
-
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name aerominal aerominal.py
-```
-
----
-
-## Customization
-
-### Creating Custom Themes
-
-Add your theme to `themes.py`:
-
-```python
-'my_theme': {
-    'background': '#1a1a1a',
-    'text_color': '#ffffff',
-    'input_bg': '#2a2a2a',
-    'prompt_color': '#ff6b6b',
-    'status_color': '#888888',
-    'selection_bg': '#3a3a3a',
-    'accent_color': '#ff6b6b',
-    'titlebar_bg': '#2a2a2a'
-}
-```
-
-Your theme will automatically appear under **Right-Click → Themes**.
-
----
-
-### Modifying Settings
-
-User settings are stored in:
-
-```
-~/.aerominal/config.json
-```
-
-Options include:
-
-* Window opacity (0.5–1.0)
-* Theme selection
-* Font settings
-* Window size & position
-
----
-
-## Built-In Themes
-
-* **Dark** — Pure black with blue accents
-* **Light** — Soft gray with blue highlights
-* **Blue** — Deep blue with cyan accents
-* **Green** — Classic terminal-green style
-* **Purple** — Dark purple with lavender tones
-* **Matrix** — Black with neon-green text
-
----
+Or just downlaod the Linux/Windows executables.
 
 ## Usage
 
-* **Right-click** anywhere for settings and themes
-* **Mouse wheel** scrolls through output
-* **Themes** can be switched instantly
-* **Opacity** adjusts from the right-click menu
-* **Command history** persists during session
+Run aerominal using the Linux/Windows executables.
 
----
-
-## Project Structure
-
-```
-aerominal/
-├── aerominal.py      # Main application logic
-├── config.py         # Configuration management
-├── themes.py         # Theme definitions
-├── build.py          # Build script
-└── requirements.txt  # Dependencies
-```
-
----
-
-## Technical Details
-
-* Built entirely with **Tkinter** for cross-platform compatibility
-* Uses `subprocess` with `CREATE_NO_WINDOW` on Windows to hide the CMD window
-* Custom transparency and theme system
-* Thread-safe output handling
-* Grid-based UI layout for stable resizing
-
----
-
-## Requirements
-
-* Python 3.7+
-* Windows 10/11 or Linux
-* Tkinter (usually included)
-
-*Note: The project is written in Python and **may run on macOS**,
-but it is not currently supported or tested.*
-
----
-
-## Building from Source (Advanced)
-
-Using PyInstaller manually:
-
+To run aerominal:
 ```bash
-pyinstaller --onefile --windowed --name aerominal \
-  --add-data "config.py;." \
-  --add-data "themes.py;." \
-  aerominal.py
+source venv/bin/activate
+python3 aerominal.py
 ```
 
----
+## Building Executables
 
-## Open Source
+### Linux
 
-You are encouraged to:
+To build a standalone executable for Linux:
+```bash
+source venv/bin/activate
+pyinstaller --onefile --windowed --icon=logo.png aerominal.py
+```
+The executable will be found in the `dist` directory.
 
-* Modify and extend the code
-* Create and share custom themes
-* Improve the functionality
-* Report and fix bugs
-* Port to additional operating systems
+### Windows
 
-The project is designed to be easy to extend, especially `themes.py` and `aerominal.py`.
+To build a standalone executable for Windows (requires a Windows environment):
+```bash
+pyinstaller --onefile --windowed --icon=aerominal.ico aerominal.py
+```
+The executable will be found in the `dist` directory.
 
----
+## Configuration
 
-**aerominal terminal — clean, modern, customizable.**
+Aerominal stores its configuration in `~/.aerominal/config/settings.json`.
+Themes are stored in `~/.aerominal/themes/official/` and `~/.aerominal/themes/user/`.
 
----
+## Contributing
+
+Feel free to fork the repository, make changes, and submit pull requests.
