@@ -23,7 +23,7 @@ aerominal is a customizable terminal emulator built with Python and Tkinter.
 
 1.  Clone this repository:
     ```bash
-    git clone https://github.com/your-username/aerominal.git
+    git clone https://github.com/viztini/aerominal.git
     cd aerominal
     ```
 2.  Create and activate a virtual environment:
@@ -36,11 +36,11 @@ aerominal is a customizable terminal emulator built with Python and Tkinter.
     pip install -r requirements.txt
     ```
 
-Or just downlaod the Linux/Windows executables.
+Or just downlaod the Windows executables.
 
 ## Usage
 
-Run aerominal using the Linux/Windows executables.
+Run aerominal using the Windows executables.
 
 To run aerominal:
 ```bash
