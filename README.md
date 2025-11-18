@@ -1,5 +1,3 @@
-![aerominal Banner](./banner.png)
-
 ### aerominal
 
 aerominal is a customizable terminal emulator built with Python and Tkinter.
