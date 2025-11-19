@@ -1,8 +1,8 @@
 ![banner](./banner.png)
 
-### aerominal
+### aerominal [beta]
 
-aerominal is a customizable terminal emulator built with Python and Tkinter.
+aerominal is a customizable terminal emulator built with Python and Tkinter. aerominal is currentely in it's beta testing stages, and there mey be bugs.
 
 ## Features
 
