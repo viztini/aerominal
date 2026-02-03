@@ -54,3 +54,6 @@ class ConfigManager:
     def set_theme(self, name):
         self.set_setting(name, 'appearance', 'theme')
         self.theme = self.theme_manager.get_theme(name)
+
+    def set_opacity(self, val):
+        self.set_setting(val, 'window', 'opacity')
