@@ -25,4 +25,4 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 *Minimum requirements: Python 3.8+*
 
 
-![xp-ample](./src/assets/example.png)
+![example-image](./src/assets/example.png)
