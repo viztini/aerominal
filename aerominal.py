@@ -1,9 +1,18 @@
-import os, sys
-if os.name == 'nt':
-    import ctypes
-    hWnd = ctypes.WinDLL('kernel32').GetConsoleWindow()
-    if hWnd: ctypes.WinDLL('user32').ShowWindow(hWnd, 0)
+import os
 
-from src.main import main
+def hide_console():
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+        if hwnd:
+            ctypes.windll.user32.ShowWindow(hwnd, 0)
+    except Exception:
+        pass
+
+
 if __name__ == "__main__":
+    hide_console()
+    from src.main import main
     main()
