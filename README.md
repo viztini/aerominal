@@ -1,6 +1,7 @@
 ![banner](./src/assets/banner.png)
 
 # [aerominal]
+## 14.7× lighter then your average Chrome tab.
 A modular, high-performance terminal emulator for Windows and Linux.
 
 ## Features
