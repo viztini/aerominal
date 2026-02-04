@@ -21,15 +21,21 @@ class AerominalApp:
         self.root.attributes('-alpha', self.config.get_setting('window', 'opacity'))
         
         try:
-            ico_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'aerominal.ico')
-            if os.path.exists(ico_path):
+            # Robust icon path resolution for both source and bundled runs
+            base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            ico_path = os.path.join(base_dir, 'src', 'assets', 'aerominal.ico')
+            
+            if os.name == 'nt' and os.path.exists(ico_path):
                 self.root.iconbitmap(ico_path)
-            else:
-                logo_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'aerominal-logo.png')
-                if os.path.exists(logo_path):
-                    img = tk.PhotoImage(file=logo_path)
-                    self.root.iconphoto(True, img)
-        except: pass
+            elif os.path.exists(ico_path):
+                # On non-Windows, iconbitmap might not work with .ico, use PhotoImage if needed
+                # But for now, we try iconbitmap first as it's standard for .ico
+                try:
+                    self.root.iconbitmap(ico_path)
+                except:
+                    pass
+        except Exception as e:
+            print(f"Icon loading error: {e}")
         
         main = tk.Frame(self.root, bg=self.config.theme['background'])
         main.pack(fill=tk.BOTH, expand=True)
