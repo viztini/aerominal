@@ -21,15 +21,12 @@ class AerominalApp:
         self.root.attributes('-alpha', self.config.get_setting('window', 'opacity'))
         
         try:
-            # Robust icon path resolution for both source and bundled runs
             base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
             ico_path = os.path.join(base_dir, 'src', 'assets', 'aerominal.ico')
             
             if os.name == 'nt' and os.path.exists(ico_path):
                 self.root.iconbitmap(ico_path)
             elif os.path.exists(ico_path):
-                # On non-Windows, iconbitmap might not work with .ico, use PhotoImage if needed
-                # But for now, we try iconbitmap first as it's standard for .ico
                 try:
                     self.root.iconbitmap(ico_path)
                 except:
@@ -82,20 +79,15 @@ class AerominalApp:
     def update_title_bar_color(self):
         if os.name != 'nt': return
         try:
-            # Get background color from theme
             bg_color = self.config.theme.get('titlebar_bg', self.config.theme['background']).lstrip('#')
-            # Convert HEX to COLORREF (BGR format)
             r, g, b = int(bg_color[:2], 16), int(bg_color[2:4], 16), int(bg_color[4:], 16)
             colorref = (b << 16) | (g << 8) | r
-            
-            # Windows 11 DWM attribute for caption color
+
             DWMWA_CAPTION_COLOR = 35
-            
-            # Find the HWND
+
             self.root.update_idletasks()
             hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
-            
-            # Apply color
+
             ctypes.windll.dwmapi.DwmSetWindowAttribute(
                 hwnd, 
                 DWMWA_CAPTION_COLOR, 
@@ -150,12 +142,10 @@ class AerominalApp:
         while not self.pm.output_queue.empty():
             line = self.pm.output_queue.get()
             self.txt.config(state=tk.NORMAL)
-            # Handle Form Feed (Ctrl+L / CLS)
             if '\f' in line:
                 self.clear_screen()
                 line = line.split('\f')[-1]
             
-            # Filter out CWD updates from terminal display
             if "__CWD__:" in line:
                 line = line.split("__CWD__:", 1)[0]
                 self.prompt.config(text=self.get_pwd())
@@ -177,3 +167,4 @@ class AerominalApp:
             elif type == 'reset': self.current_tag = None
 
     def run(self): self.root.mainloop()
+
