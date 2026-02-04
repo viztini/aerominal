@@ -2,7 +2,7 @@
 
 # [aerominal]
 ## 14.7× lighter then your average Chrome tab.
-A modular, high-performance terminal emulator for Windows and Linux.
+A modular, high-performance, lightweight, and highly customizable terminal emulator for Windows and Linux.
 
 ## Features
 - **ANSI Color Support**: High-fidelity terminal colors with auto-contrast adjustment
