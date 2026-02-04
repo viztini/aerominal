@@ -6,6 +6,7 @@ class ProcessManager:
         self.config = config
         self.output_queue = queue.Queue()
         self.process = None
+        self.cwd = os.getcwd()
 
     def start(self):
         cmd = self.config.get_setting('behavior', 'shell_path') or ('cmd.exe' if os.name == 'nt' else 'bash')
@@ -17,12 +18,21 @@ class ProcessManager:
     def _read(self, pipe):
         try:
             for line in iter(pipe.readline, ''):
-                if line: self.output_queue.put(line)
+                if line:
+                    if "__CWD__:" in line:
+                        self.cwd = line.split("__CWD__:", 1)[1].strip()
+                        self.output_queue.put(line)
+                    else:
+                        self.output_queue.put(line)
         except: pass
 
     def write(self, cmd):
         if self.process:
-            self.process.stdin.write(cmd + '\n')
+            if os.name == 'nt':
+                full_cmd = f"{cmd} & echo __CWD__:%CD%\n"
+            else:
+                full_cmd = f"{cmd}; echo __CWD__:$PWD\n"
+            self.process.stdin.write(full_cmd)
             self.process.stdin.flush()
 
     def interrupt(self):

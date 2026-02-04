@@ -1,7 +1,7 @@
 # Aerominal UI Application
 import tkinter as tk
 from tkinter import ttk, messagebox
-import os, sys
+import os, sys, ctypes
 from ..core.ansi_parser import ANSIParser
 
 class AerominalApp:
@@ -11,6 +11,7 @@ class AerominalApp:
         self.root = tk.Tk()
         self.root.title("aerominal")
         self.setup_ui()
+        self.update_title_bar_color()
         self.pm.start()
         self.update_output()
 
@@ -19,6 +20,17 @@ class AerominalApp:
         self.root.configure(bg=self.config.theme['background'])
         self.root.attributes('-alpha', self.config.get_setting('window', 'opacity'))
         
+        try:
+            ico_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'aerominal.ico')
+            if os.path.exists(ico_path):
+                self.root.iconbitmap(ico_path)
+            else:
+                logo_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'aerominal-logo.png')
+                if os.path.exists(logo_path):
+                    img = tk.PhotoImage(file=logo_path)
+                    self.root.iconphoto(True, img)
+        except: pass
+        
         main = tk.Frame(self.root, bg=self.config.theme['background'])
         main.pack(fill=tk.BOTH, expand=True)
         
@@ -26,11 +38,12 @@ class AerominalApp:
                           insertbackground=self.config.theme['text_color'], borderwidth=0, relief='flat',
                           padx=10, pady=10, font=(self.config.get_setting('appearance', 'font_family'), self.config.get_setting('appearance', 'font_size')),
                           selectbackground=self.config.theme['selection_bg'])
-        self.txt.pack(fill=tk.BOTH, expand=True)
         self.txt.config(state=tk.DISABLED)
-        
+
         input_frame = tk.Frame(main, bg=self.config.theme['background'])
         input_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=5)
+        
+        self.txt.pack(fill=tk.BOTH, expand=True)
         
         self.prompt = tk.Label(input_frame, text=self.get_pwd(), bg=self.config.theme['background'], 
                               fg=self.config.theme['prompt_color'], font=(self.config.get_setting('appearance', 'font_family'), self.config.get_setting('appearance', 'font_size'), 'bold'))
@@ -60,8 +73,35 @@ class AerominalApp:
         for w in [self.root, self.txt, self.input, self.prompt, input_frame]:
             w.bind("<Button-3>", lambda e: self.menu.post(e.x_root, e.y_root))
 
+    def update_title_bar_color(self):
+        if os.name != 'nt': return
+        try:
+            # Get background color from theme
+            bg_color = self.config.theme.get('titlebar_bg', self.config.theme['background']).lstrip('#')
+            # Convert HEX to COLORREF (BGR format)
+            r, g, b = int(bg_color[:2], 16), int(bg_color[2:4], 16), int(bg_color[4:], 16)
+            colorref = (b << 16) | (g << 8) | r
+            
+            # Windows 11 DWM attribute for caption color
+            DWMWA_CAPTION_COLOR = 35
+            
+            # Find the HWND
+            self.root.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
+            
+            # Apply color
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd, 
+                DWMWA_CAPTION_COLOR, 
+                ctypes.byref(ctypes.c_int(colorref)), 
+                4
+            )
+        except Exception as e:
+            print(f"Failed to update title bar color: {e}")
+
     def get_pwd(self):
-        return os.getcwd().replace(os.path.expanduser('~'), '~') + " ❯"
+        cwd = getattr(self.pm, 'cwd', os.getcwd())
+        return cwd.replace(os.path.expanduser('~'), '~') + " ❯"
 
     def change_theme(self, name):
         self.config.set_theme(name)
@@ -69,7 +109,7 @@ class AerominalApp:
         self.txt.configure(bg=self.config.theme['background'], fg=self.config.theme['text_color'], selectbackground=self.config.theme['selection_bg'])
         self.input.configure(bg=self.config.theme['input_bg'], fg=self.config.theme['text_color'], insertbackground=self.config.theme['prompt_color'])
         self.prompt.configure(bg=self.config.theme['background'], fg=self.config.theme['prompt_color'])
-        # Refresh all ansi tags for contrast
+        self.update_title_bar_color()
         for tag in self.txt.tag_names():
             if tag.startswith('ansi_'):
                 color = tag.split('_')[1]
@@ -79,14 +119,13 @@ class AerominalApp:
         try:
             bg = self.config.theme['background'].lstrip('#')
             bg_lum = int(bg[:2],16)*0.299 + int(bg[2:4],16)*0.587 + int(bg[4:],16)*0.114
-            # Simplified: if bg is dark, ensure ansi isn't too dark. If bg is light, ensure ansi isn't too light.
-            # This is a bit complex for a one-liner, so we'll just use a basic threshold.
             return 'white' if bg_lum < 40 and color == 'black' else color
         except: return color
 
     def change_opacity(self, val):
         self.config.set_opacity(val)
         self.root.attributes('-alpha', val)
+        self.root.update_idletasks()
 
     def clear_screen(self):
         self.txt.config(state=tk.NORMAL)
@@ -110,6 +149,13 @@ class AerominalApp:
                 self.clear_screen()
                 line = line.split('\f')[-1]
             
+            # Filter out CWD updates from terminal display
+            if "__CWD__:" in line:
+                line = line.split("__CWD__:", 1)[0]
+                self.prompt.config(text=self.get_pwd())
+            
+            if not line: continue
+
             if show_colors: self.insert_ansi(line)
             else: self.txt.insert(tk.END, ANSIParser.strip(line))
             self.txt.see(tk.END)
