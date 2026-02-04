@@ -23,3 +23,6 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 - `aerominal.py`: Main entry point (redirector)
 
 *Minimum requirements: Python 3.8+*
+
+
+![xp-ample](./src/assets/example.png)
