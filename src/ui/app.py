@@ -13,6 +13,9 @@ class AerominalApp:
         self.setup_ui()
         self.update_title_bar_color()
         self.pm.start()
+        self.history = []
+        self.history_idx = -1
+        self.temp_input = ""
         self.update_output()
 
     def setup_ui(self):
@@ -58,9 +61,18 @@ class AerominalApp:
         self.input.pack(fill=tk.X, side=tk.LEFT, expand=True, padx=(5, 0))
         self.input.bind('<Return>', self.send_cmd)
         self.input.bind('<Control-c>', lambda e: self.pm.interrupt())
+        self.input.bind('<Up>', self.history_up)
+        self.input.bind('<Down>', self.history_down)
+        self.root.bind('<Control-l>', lambda e: self.clear_screen())
+        self.root.bind('<Control-L>', lambda e: self.clear_screen())
         self.input.focus_set()
 
         self.menu = tk.Menu(self.root, tearoff=0)
+        self.menu.add_command(label="Copy", command=self.copy_selection)
+        self.menu.add_command(label="Cut", command=self.cut_selection)
+        self.menu.add_command(label="Paste", command=self.paste_selection)
+        self.menu.add_command(label="Select All", command=self.select_all)
+        self.menu.add_separator()
         self.menu.add_command(label="Clear", command=self.clear_screen)
         tm = tk.Menu(self.menu, tearoff=0)
         for t in self.config.theme_manager.get_available_themes():
@@ -84,6 +96,7 @@ class AerominalApp:
             colorref = (b << 16) | (g << 8) | r
 
             DWMWA_CAPTION_COLOR = 35
+            DWMWA_TEXT_COLOR = 36
 
             self.root.update_idletasks()
             hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
@@ -94,8 +107,18 @@ class AerominalApp:
                 ctypes.byref(ctypes.c_int(colorref)), 
                 4
             )
+
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd,
+                DWMWA_TEXT_COLOR,
+                ctypes.byref(ctypes.c_int(colorref)),
+                4
+            )
+
+            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, 0)
+            
         except Exception as e:
-            print(f"Failed to update title bar color: {e}")
+            print(f"Failed to update title bar: {e}")
 
     def get_pwd(self):
         cwd = getattr(self.pm, 'cwd', os.getcwd())
@@ -132,10 +155,71 @@ class AerominalApp:
 
     def send_cmd(self, e=None):
         cmd = self.input.get()
-        if cmd in ['clear', 'cls']: self.clear_screen()
-        elif cmd: self.pm.write(cmd)
+        if cmd in ['clear', 'cls']: 
+            self.clear_screen()
+        elif cmd: 
+            if not self.history or self.history[-1] != cmd:
+                self.history.append(cmd)
+            self.history_idx = -1
+            self.pm.write(cmd)
         self.input.delete(0, tk.END)
         self.prompt.config(text=self.get_pwd())
+
+    def history_up(self, e):
+        if not self.history: return
+        if self.history_idx == -1:
+            self.temp_input = self.input.get()
+            self.history_idx = len(self.history) - 1
+        elif self.history_idx > 0:
+            self.history_idx -= 1
+        
+        self.input.delete(0, tk.END)
+        self.input.insert(0, self.history[self.history_idx])
+        return "break"
+
+    def history_down(self, e):
+        if self.history_idx == -1: return
+        
+        self.history_idx += 1
+        self.input.delete(0, tk.END)
+        if self.history_idx < len(self.history):
+            self.input.insert(0, self.history[self.history_idx])
+        else:
+            self.input.insert(0, self.temp_input)
+            self.history_idx = -1
+        return "break"
+
+    def copy_selection(self):
+        try:
+            selected_text = self.root.focus_get().selection_get()
+            self.root.clipboard_clear()
+            self.root.clipboard_append(selected_text)
+        except: pass
+
+    def cut_selection(self):
+        focus = self.root.focus_get()
+        if isinstance(focus, tk.Entry):
+            try:
+                self.copy_selection()
+                focus.delete(tk.SEL_FIRST, tk.SEL_LAST)
+            except: pass
+
+    def paste_selection(self):
+        focus = self.root.focus_get()
+        if isinstance(focus, tk.Entry):
+            try:
+                focus.insert(tk.INSERT, self.root.clipboard_get())
+            except: pass
+
+    def select_all(self):
+        focus = self.root.focus_get()
+        if isinstance(focus, (tk.Entry, tk.Text)):
+            if isinstance(focus, tk.Entry):
+                focus.select_range(0, tk.END)
+                focus.icursor(tk.END)
+            else:
+                focus.tag_add(tk.SEL, "1.0", tk.END)
+        return "break"
 
     def update_output(self):
         show_colors = self.config.get_setting('appearance', 'show_ansi_colors')
