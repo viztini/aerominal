@@ -1,4 +1,4 @@
-![banner](./src/assets/banner.png)
+<img width="842" height="251" alt="image" src="https://github.com/user-attachments/assets/893dac8b-4b76-4cf8-982f-d9c85c8c8bbd" />![banner](./src/assets/banner.png)
 
 # [aerominal]
 ## 14.7× lighter then your average Chrome tab.
@@ -24,5 +24,7 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 
 *Minimum requirements: Python 3.8+*
 
-
 ![example-image](./src/assets/example.png)
+
+<img width="842" height="251" alt="image" src="https://github.com/user-attachments/assets/02da10d1-f546-4462-adf8-71df9d553d77" />
+
