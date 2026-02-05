@@ -29,11 +29,7 @@ class ProcessManager:
     def write(self, cmd):
         if self.process:
             if os.name == 'nt':
-                # Use cmd /c so %CD% is expanded in a child process after the user's
-                # command runs; otherwise %CD% is expanded at parse time and we get
-                # the previous directory (e.g. after "cd .." the display wouldn't update).
-                # Outer cmd: %%%% -> %% so inner receives %CD% and expands it to new cwd.
-                full_cmd = f'{cmd} & cmd /c "echo __CWD__:%%%%CD%%%%"\n'
+                full_cmd = f"{cmd} & echo __CWD__:%CD%\n"
             else:
                 full_cmd = f"{cmd}; echo __CWD__:$PWD\n"
             self.process.stdin.write(full_cmd)
