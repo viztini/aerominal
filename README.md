@@ -1,5 +1,3 @@
-<img width="842" height="251" alt="image" src="https://github.com/user-attachments/assets/893dac8b-4b76-4cf8-982f-d9c85c8c8bbd" />![banner](./src/assets/banner.png)
-
 # [aerominal]
 ## 14.7× lighter then your average Chrome tab.
 A modular, high-performance, lightweight, and highly customizable terminal emulator for Windows and Linux.
