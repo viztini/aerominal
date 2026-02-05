@@ -28,4 +28,7 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=viztini/aerominal&type=date&legend=top-left)](https://www.star-history.com/#viztini/aerominal&type=date&legend=top-left)
+<div align="center">
+  [![Star History Chart](https://api.star-history.com/svg?repos=viztini/aerominal&type=date&legend=top-left)](https://www.star-history.com/#viztini/aerominal&type=date&legend=top-left)
+</div>
+
