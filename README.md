@@ -26,5 +26,6 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 
 ![example-image](./src/assets/example.png)
 
-<img width="842" height="251" alt="image" src="https://github.com/user-attachments/assets/02da10d1-f546-4462-adf8-71df9d553d77" />
+## Star History
 
+[![Star History Chart](https://api.star-history.com/svg?repos=viztini/aerominal&type=date&legend=top-left)](https://www.star-history.com/#viztini/aerominal&type=date&legend=top-left)
