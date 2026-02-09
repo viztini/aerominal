@@ -1,4 +1,4 @@
-# Aerominal ANSI Parser
+
 import re
 
 class ANSIParser:

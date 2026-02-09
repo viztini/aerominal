@@ -1,14 +1,16 @@
-# Aerominal UI Application
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os, sys, ctypes
 from ..core.ansi_parser import ANSIParser
+from .animator import ThemeAnimator
 
 class AerominalApp:
     def __init__(self, config, process_mgr):
         self.config = config
         self.pm = process_mgr
         self.root = tk.Tk()
+        self.animator = ThemeAnimator(self)
         self.root.title("aerominal")
         self.setup_ui()
         self.update_title_bar_color()
@@ -67,6 +69,10 @@ class AerominalApp:
         self.root.bind('<Control-L>', lambda e: self.clear_screen())
         self.input.focus_set()
 
+        self.root.bind('<Control-l>', lambda e: self.clear_screen())
+        self.root.bind('<Control-L>', lambda e: self.clear_screen())
+        self.input.focus_set()
+
         self.menu = tk.Menu(self.root, tearoff=0)
         self.menu.add_command(label="Copy", command=self.copy_selection)
         self.menu.add_command(label="Cut", command=self.cut_selection)
@@ -74,14 +80,17 @@ class AerominalApp:
         self.menu.add_command(label="Select All", command=self.select_all)
         self.menu.add_separator()
         self.menu.add_command(label="Clear", command=self.clear_screen)
+        
         tm = tk.Menu(self.menu, tearoff=0)
         for t in self.config.theme_manager.get_available_themes():
             tm.add_command(label=t, command=lambda name=t: self.change_theme(name))
         self.menu.add_cascade(label="Themes", menu=tm)
+        
         om = tk.Menu(self.menu, tearoff=0)
-        for o in [0.5, 0.75, 1.0]:
+        for o in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
             om.add_command(label=f"{int(o*100)}%", command=lambda val=o: self.change_opacity(val))
         self.menu.add_cascade(label="Opacity", menu=om)
+        
         self.menu.add_separator()
         self.menu.add_command(label="Exit", command=self.root.quit)
         
@@ -101,35 +110,54 @@ class AerominalApp:
             self.root.update_idletasks()
             hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
 
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                hwnd, 
-                DWMWA_CAPTION_COLOR, 
-                ctypes.byref(ctypes.c_int(colorref)), 
-                4
-            )
+            if hwnd:
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    hwnd, 
+                    DWMWA_CAPTION_COLOR, 
+                    ctypes.byref(ctypes.c_int(colorref)), 
+                    4
+                )
 
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                hwnd,
-                DWMWA_TEXT_COLOR,
-                ctypes.byref(ctypes.c_int(colorref)),
-                4
-            )
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    hwnd,
+                    DWMWA_TEXT_COLOR,
+                    ctypes.byref(ctypes.c_int(colorref)),
+                    4
+                )
 
-            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, 0)
+                ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, 0)
             
         except Exception as e:
+            # Safely ignore title bar coloring errors to prevent crash
             print(f"Failed to update title bar: {e}")
 
     def get_pwd(self):
         cwd = getattr(self.pm, 'cwd', os.getcwd())
+        if os.name == 'nt':
+            return cwd + ">"
         return cwd.replace(os.path.expanduser('~'), '~') + " ❯"
 
     def change_theme(self, name):
+        old_theme = self.config.theme
         self.config.set_theme(name)
-        self.root.configure(bg=self.config.theme['background'])
-        self.txt.configure(bg=self.config.theme['background'], fg=self.config.theme['text_color'], selectbackground=self.config.theme['selection_bg'])
-        self.input.configure(bg=self.config.theme['input_bg'], fg=self.config.theme['text_color'], insertbackground=self.config.theme['prompt_color'])
-        self.prompt.configure(bg=self.config.theme['background'], fg=self.config.theme['prompt_color'])
+        new_theme = self.config.theme
+        
+        self.animator.animate_theme_change(old_theme, new_theme)
+
+    def apply_theme_colors(self, theme):
+        self.root.configure(bg=theme['background'])
+        self.txt.configure(bg=theme['background'], fg=theme['text_color'], selectbackground=theme['selection_bg'])
+        self.input.configure(bg=theme['input_bg'], fg=theme['text_color'], insertbackground=theme['prompt_color'])
+        self.prompt.configure(bg=theme['background'], fg=theme['prompt_color'])
+        
+        # Update frames within root
+        for widget in self.root.winfo_children():
+            if isinstance(widget, tk.Frame):
+                widget.configure(bg=theme['background'])
+                for child in widget.winfo_children():
+                     if isinstance(child, tk.Frame):
+                        child.configure(bg=theme['background'])
+                        
         self.update_title_bar_color()
         for tag in self.txt.tag_names():
             if tag.startswith('ansi_'):
@@ -230,17 +258,25 @@ class AerominalApp:
                 self.clear_screen()
                 line = line.split('\f')[-1]
             
+            # Clean up usage of internal CWD probe
+            import re
+            line = re.sub(r' & echo\.? & echo __CWD__:[^\s\n]*', '', line)
+
             if "__CWD__:" in line:
                 line = line.split("__CWD__:", 1)[0]
                 self.prompt.config(text=self.get_pwd())
             
             if not line: continue
-
-            if show_colors: self.insert_ansi(line)
-            else: self.txt.insert(tk.END, ANSIParser.strip(line))
-            self.txt.see(tk.END)
+            
+            # More efficient output handling
+            try:
+                if show_colors: self.insert_ansi(line)
+                else: self.txt.insert(tk.END, ANSIParser.strip(line))
+                self.txt.see(tk.END)
+            except: pass
+            
             self.txt.config(state=tk.DISABLED)
-        self.root.after(50, self.update_output)
+        self.root.after(10, self.update_output)
 
     def insert_ansi(self, text):
         for type, val in ANSIParser.parse(text):

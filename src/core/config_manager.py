@@ -1,4 +1,4 @@
-# Aerominal Configuration Manager
+
 import json, os
 from pathlib import Path
 from .theme_manager import ThemeManager

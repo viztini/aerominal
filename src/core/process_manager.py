@@ -1,4 +1,4 @@
-# Aerominal Process Manager
+
 import subprocess, threading, queue, os, signal
 
 class ProcessManager:
@@ -10,7 +10,8 @@ class ProcessManager:
 
     def start(self):
         cmd = self.config.get_setting('behavior', 'shell_path') or ('cmd.exe' if os.name == 'nt' else 'bash')
-        args = [cmd, '/k'] if os.name == 'nt' and cmd == 'cmd.exe' else [cmd]
+        cmd = self.config.get_setting('behavior', 'shell_path') or ('cmd.exe' if os.name == 'nt' else 'bash')
+        args = [cmd, '/v:on', '/k'] if os.name == 'nt' and cmd == 'cmd.exe' else [cmd]
         self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, universal_newlines=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
         threading.Thread(target=self._read, args=(self.process.stdout,), daemon=True).start()
         threading.Thread(target=self._read, args=(self.process.stderr,), daemon=True).start()
@@ -29,7 +30,7 @@ class ProcessManager:
     def write(self, cmd):
         if self.process:
             if os.name == 'nt':
-                full_cmd = f"{cmd} & echo __CWD__:%CD%\n"
+                full_cmd = f"{cmd} & echo. & echo __CWD__:!CD!\n"
             else:
                 full_cmd = f"{cmd}; echo __CWD__:$PWD\n"
             self.process.stdin.write(full_cmd)
