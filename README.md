@@ -20,6 +20,11 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 - `src/assets/`: UI resources and icons
 - `aerominal.py`: Main entry point (redirector)
 
+> [!IMPORTANT]
+> PowerShell is not supported.
+> Aerominal is incompatible with PowerShell, commands break and the prompt UI fails.
+> Please do not file issues about PowerShell support.
+
 *Minimum requirements: Python 3.8+*
 
 ![example-image](./src/assets/example.png)
