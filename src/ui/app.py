@@ -172,9 +172,8 @@ class AerominalApp:
         except: return color
 
     def change_opacity(self, val):
-        self.config.set_opacity(val)
-        self.root.attributes('-alpha', val)
-        self.root.update_idletasks()
+        current_opacity = float(self.root.attributes('-alpha'))
+        self.animator.animate_opacity_change(current_opacity, val)
 
     def clear_screen(self):
         self.txt.config(state=tk.NORMAL)
@@ -250,6 +249,10 @@ class AerominalApp:
         return "break"
 
     def update_output(self):
+        
+        # When I wrote this code, only me and God knew how it worked.
+        # Now only God knows.
+
         show_colors = self.config.get_setting('appearance', 'show_ansi_colors')
         while not self.pm.output_queue.empty():
             line = self.pm.output_queue.get()
@@ -258,7 +261,6 @@ class AerominalApp:
                 self.clear_screen()
                 line = line.split('\f')[-1]
             
-            # Clean up usage of internal CWD probe
             import re
             line = re.sub(r' & echo\.? & echo __CWD__:[^\s\n]*', '', line)
 
@@ -268,7 +270,6 @@ class AerominalApp:
             
             if not line: continue
             
-            # More efficient output handling
             try:
                 if show_colors: self.insert_ansi(line)
                 else: self.txt.insert(tk.END, ANSIParser.strip(line))
