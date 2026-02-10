@@ -1,6 +1,7 @@
 import tkinter as tk
 
 class ThemeAnimator:
+    # Makes theme changes feel expensive instead of instant
     def __init__(self, app):
         self.app = app
         self.root = app.root
@@ -36,19 +37,16 @@ class ThemeAnimator:
             self.app.apply_theme_colors(new_theme)
             return
 
-
         current_bg = self._interpolate_color(old_theme['background'], new_theme['background'], step, self.steps)
         current_fg = self._interpolate_color(old_theme['text_color'], new_theme['text_color'], step, self.steps)
         current_input_bg = self._interpolate_color(old_theme['input_bg'], new_theme['input_bg'], step, self.steps)
         current_prompt = self._interpolate_color(old_theme['prompt_color'], new_theme['prompt_color'], step, self.steps)
         current_select = self._interpolate_color(old_theme['selection_bg'], new_theme['selection_bg'], step, self.steps)
 
-
         self.app.root.configure(bg=current_bg)
         self.app.txt.configure(bg=current_bg, fg=current_fg, selectbackground=current_select)
         self.app.input.configure(bg=current_input_bg, fg=current_fg, insertbackground=current_prompt)
         self.app.prompt.configure(bg=current_bg, fg=current_prompt)
-        
 
         for widget in self.app.root.winfo_children():
             if isinstance(widget, tk.Frame):
@@ -57,6 +55,24 @@ class ThemeAnimator:
                      if isinstance(child, tk.Frame): # Input frame
                         child.configure(bg=current_bg)
 
-
         delay = int(self.duration / self.steps)
         self.current_animation = self.root.after(delay, lambda: self._animate_step(old_theme, new_theme, step + 1))
+
+    def animate_opacity_change(self, start_opacity, end_opacity):
+        if self.current_animation:
+            self.root.after_cancel(self.current_animation)
+        
+        self._animate_opacity_step(start_opacity, end_opacity, 0)
+
+    def _animate_opacity_step(self, start_opacity, end_opacity, step):
+        if step > self.steps:
+            self.app.config.set_opacity(end_opacity)
+            self.root.attributes('-alpha', end_opacity)
+            return
+
+        current_opacity = start_opacity + (end_opacity - start_opacity) * step / self.steps
+        self.root.attributes('-alpha', current_opacity)
+
+        delay = int(self.duration / self.steps)
+        self.current_animation = self.root.after(delay, lambda: self._animate_opacity_step(start_opacity, end_opacity, step + 1))
+
