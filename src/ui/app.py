@@ -1,101 +1,109 @@
+import os, sys, ctypes, re
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+                             QTextEdit, QLineEdit, QLabel, QApplication, QGraphicsOpacityEffect)
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject, QPropertyAnimation, QEasingCurve, QEvent
+from PyQt6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor, QIcon, QAction
 
-import tkinter as tk
-from tkinter import ttk, messagebox
-import os, sys, ctypes
 from ..core.ansi_parser import ANSIParser
 from .animator import ThemeAnimator
+from .menu import CustomMenu
 
-class AerominalApp:
+class AerominalApp(QMainWindow):
     def __init__(self, config, process_mgr):
+        super().__init__()
         self.config = config
         self.pm = process_mgr
-        self.root = tk.Tk()
         self.animator = ThemeAnimator(self)
-        self.root.title("aerominal")
-        self.setup_ui()
-        self.update_title_bar_color()
-        self.pm.start()
+        self.setWindowTitle("aerominal")
+        
         self.history = []
         self.history_idx = -1
         self.temp_input = ""
-        self.update_output()
+        
+        self.setup_ui()
+        self.set_window_icon()
+        self.update_title_bar_color()
+        self.pm.start()
+        
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_output)
+        self.timer.start(10)
 
     def setup_ui(self):
-        self.root.geometry(f"{self.config.get_setting('window', 'width')}x{self.config.get_setting('window', 'height')}")
-        self.root.configure(bg=self.config.theme['background'])
-        self.root.attributes('-alpha', self.config.get_setting('window', 'opacity'))
+        width = int(self.config.get_setting('window', 'width'))
+        height = int(self.config.get_setting('window', 'height'))
+        self.resize(width, height)
+        self.setWindowOpacity(self.config.get_setting('window', 'opacity'))
         
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        self.layout = QVBoxLayout(central_widget)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
+        theme = self.config.theme
+        font_family = self.config.get_setting('appearance', 'font_family')
+        font_size = int(self.config.get_setting('appearance', 'font_size'))
+        self.app_font = QFont(font_family, font_size)
+
+        self.txt = QTextEdit()
+        self.txt.setReadOnly(True)
+        self.txt.setFont(self.app_font)
+        self.txt.setFrameStyle(0)
+        self.txt.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.txt.customContextMenuRequested.connect(self.show_context_menu)
+        self.txt.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        
+        self.input_container = QWidget()
+        self.input_layout = QHBoxLayout(self.input_container)
+        self.input_layout.setContentsMargins(10, 5, 10, 5)
+
+        self.prompt = QLabel(self.get_pwd())
+        self.prompt.setFont(self.app_font)
+        
+        self.input = QLineEdit()
+        self.input.setFont(self.app_font)
+        self.input.setFrame(False)
+        self.input.returnPressed.connect(self.send_cmd)
+        
+        self.input_layout.addWidget(self.prompt)
+        self.input_layout.addWidget(self.input)
+
+        self.layout.addWidget(self.txt)
+        self.layout.addWidget(self.input_container)
+
+        self.apply_theme_colors(theme)
+        self.input.setFocus()
+
+        # Scrollbar Fade Setup
+        self.sb = self.txt.verticalScrollBar()
+        self.sb_effect = QGraphicsOpacityEffect(self.sb)
+        self.sb.setGraphicsEffect(self.sb_effect)
+        self.sb_effect.setOpacity(0.0)
+        self.sb_anim = QPropertyAnimation(self.sb_effect, b"opacity")
+        self.sb_anim.setDuration(200)
+        
+        self.setMouseTracking(True)
+        central_widget.setMouseTracking(True)
+        self.txt.setMouseTracking(True)
+        self.txt.viewport().setMouseTracking(True)
+        self.txt.viewport().installEventFilter(self)
+        self.txt.installEventFilter(self)
+
+        # Shortcuts
+        self.clear_action = QAction(self)
+        self.clear_action.setShortcut("Ctrl+L")
+        self.clear_action.triggered.connect(self.clear_screen)
+        self.addAction(self.clear_action)
+
+    def set_window_icon(self):
         try:
             base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
             ico_path = os.path.join(base_dir, 'src', 'assets', 'aerominal.ico')
-            
-            if os.name == 'nt' and os.path.exists(ico_path):
-                self.root.iconbitmap(ico_path)
-            elif os.path.exists(ico_path):
-                try:
-                    self.root.iconbitmap(ico_path)
-                except:
-                    pass
+            if os.path.exists(ico_path):
+                self.setWindowIcon(QIcon(ico_path))
         except Exception as e:
             print(f"Icon loading error: {e}")
-        
-        main = tk.Frame(self.root, bg=self.config.theme['background'])
-        main.pack(fill=tk.BOTH, expand=True)
-        
-        self.txt = tk.Text(main, bg=self.config.theme['background'], fg=self.config.theme['text_color'], 
-                          insertbackground=self.config.theme['text_color'], borderwidth=0, relief='flat',
-                          padx=10, pady=10, font=(self.config.get_setting('appearance', 'font_family'), self.config.get_setting('appearance', 'font_size')),
-                          selectbackground=self.config.theme['selection_bg'])
-        self.txt.config(state=tk.DISABLED)
-
-        input_frame = tk.Frame(main, bg=self.config.theme['background'])
-        input_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=5)
-        
-        self.txt.pack(fill=tk.BOTH, expand=True)
-        
-        self.prompt = tk.Label(input_frame, text=self.get_pwd(), bg=self.config.theme['background'], 
-                              fg=self.config.theme['prompt_color'], font=(self.config.get_setting('appearance', 'font_family'), self.config.get_setting('appearance', 'font_size'), 'bold'))
-        self.prompt.pack(side=tk.LEFT)
-
-        self.input = tk.Entry(input_frame, bg=self.config.theme['input_bg'], fg=self.config.theme['text_color'], 
-                             insertbackground=self.config.theme['prompt_color'], borderwidth=0, relief='flat',
-                             font=(self.config.get_setting('appearance', 'font_family'), self.config.get_setting('appearance', 'font_size')))
-        self.input.pack(fill=tk.X, side=tk.LEFT, expand=True, padx=(5, 0))
-        self.input.bind('<Return>', self.send_cmd)
-        self.input.bind('<Control-c>', lambda e: self.pm.interrupt())
-        self.input.bind('<Up>', self.history_up)
-        self.input.bind('<Down>', self.history_down)
-        self.root.bind('<Control-l>', lambda e: self.clear_screen())
-        self.root.bind('<Control-L>', lambda e: self.clear_screen())
-        self.input.focus_set()
-
-        self.root.bind('<Control-l>', lambda e: self.clear_screen())
-        self.root.bind('<Control-L>', lambda e: self.clear_screen())
-        self.input.focus_set()
-
-        self.menu = tk.Menu(self.root, tearoff=0)
-        self.menu.add_command(label="Copy", command=self.copy_selection)
-        self.menu.add_command(label="Cut", command=self.cut_selection)
-        self.menu.add_command(label="Paste", command=self.paste_selection)
-        self.menu.add_command(label="Select All", command=self.select_all)
-        self.menu.add_separator()
-        self.menu.add_command(label="Clear", command=self.clear_screen)
-        
-        tm = tk.Menu(self.menu, tearoff=0)
-        for t in self.config.theme_manager.get_available_themes():
-            tm.add_command(label=t, command=lambda name=t: self.change_theme(name))
-        self.menu.add_cascade(label="Themes", menu=tm)
-        
-        om = tk.Menu(self.menu, tearoff=0)
-        for o in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
-            om.add_command(label=f"{int(o*100)}%", command=lambda val=o: self.change_opacity(val))
-        self.menu.add_cascade(label="Opacity", menu=om)
-        
-        self.menu.add_separator()
-        self.menu.add_command(label="Exit", command=self.root.quit)
-        
-        for w in [self.root, self.txt, self.input, self.prompt, input_frame]:
-            w.bind("<Button-3>", lambda e: self.menu.post(e.x_root, e.y_root))
 
     def update_title_bar_color(self):
         if os.name != 'nt': return
@@ -103,32 +111,17 @@ class AerominalApp:
             bg_color = self.config.theme.get('titlebar_bg', self.config.theme['background']).lstrip('#')
             r, g, b = int(bg_color[:2], 16), int(bg_color[2:4], 16), int(bg_color[4:], 16)
             colorref = (b << 16) | (g << 8) | r
-
-            DWMWA_CAPTION_COLOR = 35
-            DWMWA_TEXT_COLOR = 36
-
-            self.root.update_idletasks()
-            hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
-
-            if hwnd:
-                ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                    hwnd, 
-                    DWMWA_CAPTION_COLOR, 
-                    ctypes.byref(ctypes.c_int(colorref)), 
-                    4
-                )
-
-                ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                    hwnd,
-                    DWMWA_TEXT_COLOR,
-                    ctypes.byref(ctypes.c_int(colorref)),
-                    4
-                )
-
-                ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, 0)
             
+            hwnd = self.winId().as_shard_ptr().get() if hasattr(self.winId(), 'as_shard_ptr') else int(self.winId())
+            
+            DWMWA_CAPTION_COLOR = 35
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd, 
+                DWMWA_CAPTION_COLOR, 
+                ctypes.byref(ctypes.c_int(colorref)), 
+                4
+            )
         except Exception as e:
-            # Safely ignore title bar coloring errors to prevent crash
             print(f"Failed to update title bar: {e}")
 
     def get_pwd(self):
@@ -137,32 +130,170 @@ class AerominalApp:
             return cwd + ">"
         return cwd.replace(os.path.expanduser('~'), '~') + " ❯"
 
+    def apply_theme_colors(self, theme):
+        bg = theme['background']
+        fg = theme['text_color']
+        input_bg = theme['input_bg']
+        prompt_fg = theme['prompt_color']
+        sel_bg = theme['selection_bg']
+
+        self.setStyleSheet(f"""
+            QMainWindow, QWidget {{
+                background-color: {bg};
+                color: {fg};
+            }}
+            QTextEdit {{
+                background-color: {bg};
+                color: {fg};
+                selection-background-color: {sel_bg};
+            }}
+            QLineEdit {{
+                background-color: {input_bg};
+                color: {fg};
+            }}
+            QLabel {{
+                color: {prompt_fg};
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: {bg};
+                width: 10px;
+                margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {sel_bg};
+                min-height: 20px;
+                border-radius: 5px;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                border: none;
+                background: none;
+                height: 0px;
+            }}
+            QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {{
+                border: none;
+                background: none;
+                color: none;
+            }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: none;
+            }}
+        """)
+        self.update_title_bar_color()
+
+    def show_context_menu(self, pos):
+        menu = CustomMenu(self, self.config.theme)
+        menu.add_command("Copy", self.txt.copy)
+        menu.add_command("Paste", self.input.paste)
+        menu.add_separator()
+        menu.add_command("Clear", self.clear_screen)
+        
+        tm = CustomMenu(self, self.config.theme)
+        for t in self.config.theme_manager.get_available_themes():
+            tm.add_command(t, lambda _, name=t: self.change_theme(name))
+        menu.add_cascade("Themes", tm)
+        
+        om = CustomMenu(self, self.config.theme)
+        for o in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+            om.add_command(f"{int(o*100)}%", lambda _, val=o: self.change_opacity(val))
+        menu.add_cascade("Opacity", om)
+        
+        menu.add_separator()
+        menu.add_command("Exit", QApplication.quit)
+        
+        menu.exec(self.txt.mapToGlobal(pos))
+
     def change_theme(self, name):
         old_theme = self.config.theme
         self.config.set_theme(name)
         new_theme = self.config.theme
-        
         self.animator.animate_theme_change(old_theme, new_theme)
 
-    def apply_theme_colors(self, theme):
-        self.root.configure(bg=theme['background'])
-        self.txt.configure(bg=theme['background'], fg=theme['text_color'], selectbackground=theme['selection_bg'])
-        self.input.configure(bg=theme['input_bg'], fg=theme['text_color'], insertbackground=theme['prompt_color'])
-        self.prompt.configure(bg=theme['background'], fg=theme['prompt_color'])
+    def change_opacity(self, val):
+        self.animator.animate_opacity_change(self.windowOpacity(), val)
+
+    def clear_screen(self):
+        self.txt.clear()
+
+    def send_cmd(self):
+        cmd = self.input.text()
+        if cmd in ['clear', 'cls']:
+            self.clear_screen()
+        elif cmd:
+            if not self.history or self.history[-1] != cmd:
+                self.history.append(cmd)
+            self.history_idx = -1
+            self.pm.write(cmd)
+        self.input.clear()
+        self.prompt.setText(self.get_pwd())
+
+    def update_output(self):
+        show_colors = self.config.get_setting('appearance', 'show_ansi_colors')
+        while not self.pm.output_queue.empty():
+            line = self.pm.output_queue.get()
+            if '\f' in line:
+                self.clear_screen()
+                line = line.split('\f')[-1]
+            
+            line = re.sub(r' & echo\.? & echo __CWD__:[^\s\n]*', '', line)
+
+            if "__CWD__:" in line:
+                line = line.split("__CWD__:", 1)[0]
+                self.prompt.setText(self.get_pwd())
+            
+            if not line: continue
+            
+            if show_colors:
+                self.insert_ansi(line)
+            else:
+                self.txt.insertPlainText(ANSIParser.strip(line))
+            
+            self.txt.moveCursor(QTextCursor.MoveOperation.End)
         
-        # Update frames within root
-        for widget in self.root.winfo_children():
-            if isinstance(widget, tk.Frame):
-                widget.configure(bg=theme['background'])
-                for child in widget.winfo_children():
-                     if isinstance(child, tk.Frame):
-                        child.configure(bg=theme['background'])
-                        
-        self.update_title_bar_color()
-        for tag in self.txt.tag_names():
-            if tag.startswith('ansi_'):
-                color = tag.split('_')[1]
-                self.txt.tag_configure(tag, foreground=self.get_contrast_color(color))
+        # Only show scrollbar after 250 lines
+        if self.txt.document().blockCount() > 250:
+            self.txt.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        else:
+            self.txt.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+    def eventFilter(self, obj, event):
+        if (obj == self.txt or obj == self.txt.viewport()) and event.type() == QEvent.Type.MouseMove:
+            pos = event.pos()
+            if obj == self.txt.viewport():
+                # Map viewport pos to text edit pos if needed, but width check is enough
+                x = pos.x()
+                distance_from_right = self.txt.viewport().width() - x
+            else:
+                distance_from_right = self.txt.width() - pos.x()
+            
+            if distance_from_right < 60 and self.txt.document().blockCount() > 250:
+                if self.sb_anim.endValue() != 1.0 or self.sb_anim.state() == QPropertyAnimation.State.Stopped:
+                    self.sb_anim.stop()
+                    self.sb_anim.setEndValue(1.0)
+                    self.sb_anim.start()
+                    self.sb.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+            else:
+                if self.sb_anim.endValue() != 0.0 or self.sb_anim.state() == QPropertyAnimation.State.Stopped:
+                    self.sb_anim.stop()
+                    self.sb_anim.setEndValue(0.0)
+                    self.sb_anim.start()
+                    self.sb.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        return super().eventFilter(obj, event)
+
+    def insert_ansi(self, text):
+        cursor = self.txt.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        
+        for type, val in ANSIParser.parse(text):
+            if type == 'text':
+                cursor.insertText(val, self.current_format if hasattr(self, 'current_format') else QTextCharFormat())
+            elif type == 'color':
+                self.current_format = QTextCharFormat()
+                self.current_format.setForeground(QColor(self.get_contrast_color(val)))
+            elif type == 'reset':
+                self.current_format = QTextCharFormat()
+                
+        self.txt.setTextCursor(cursor)
 
     def get_contrast_color(self, color):
         try:
@@ -171,121 +302,6 @@ class AerominalApp:
             return 'white' if bg_lum < 40 and color == 'black' else color
         except: return color
 
-    def change_opacity(self, val):
-        current_opacity = float(self.root.attributes('-alpha'))
-        self.animator.animate_opacity_change(current_opacity, val)
-
-    def clear_screen(self):
-        self.txt.config(state=tk.NORMAL)
-        self.txt.delete('1.0', tk.END)
-        self.txt.config(state=tk.DISABLED)
-
-    def send_cmd(self, e=None):
-        cmd = self.input.get()
-        if cmd in ['clear', 'cls']: 
-            self.clear_screen()
-        elif cmd: 
-            if not self.history or self.history[-1] != cmd:
-                self.history.append(cmd)
-            self.history_idx = -1
-            self.pm.write(cmd)
-        self.input.delete(0, tk.END)
-        self.prompt.config(text=self.get_pwd())
-
-    def history_up(self, e):
-        if not self.history: return
-        if self.history_idx == -1:
-            self.temp_input = self.input.get()
-            self.history_idx = len(self.history) - 1
-        elif self.history_idx > 0:
-            self.history_idx -= 1
-        
-        self.input.delete(0, tk.END)
-        self.input.insert(0, self.history[self.history_idx])
-        return "break"
-
-    def history_down(self, e):
-        if self.history_idx == -1: return
-        
-        self.history_idx += 1
-        self.input.delete(0, tk.END)
-        if self.history_idx < len(self.history):
-            self.input.insert(0, self.history[self.history_idx])
-        else:
-            self.input.insert(0, self.temp_input)
-            self.history_idx = -1
-        return "break"
-
-    def copy_selection(self):
-        try:
-            selected_text = self.root.focus_get().selection_get()
-            self.root.clipboard_clear()
-            self.root.clipboard_append(selected_text)
-        except: pass
-
-    def cut_selection(self):
-        focus = self.root.focus_get()
-        if isinstance(focus, tk.Entry):
-            try:
-                self.copy_selection()
-                focus.delete(tk.SEL_FIRST, tk.SEL_LAST)
-            except: pass
-
-    def paste_selection(self):
-        focus = self.root.focus_get()
-        if isinstance(focus, tk.Entry):
-            try:
-                focus.insert(tk.INSERT, self.root.clipboard_get())
-            except: pass
-
-    def select_all(self):
-        focus = self.root.focus_get()
-        if isinstance(focus, (tk.Entry, tk.Text)):
-            if isinstance(focus, tk.Entry):
-                focus.select_range(0, tk.END)
-                focus.icursor(tk.END)
-            else:
-                focus.tag_add(tk.SEL, "1.0", tk.END)
-        return "break"
-
-    def update_output(self):
-        
-        # When I wrote this code, only me and God knew how it worked.
-        # Now only God knows.
-
-        show_colors = self.config.get_setting('appearance', 'show_ansi_colors')
-        while not self.pm.output_queue.empty():
-            line = self.pm.output_queue.get()
-            self.txt.config(state=tk.NORMAL)
-            if '\f' in line:
-                self.clear_screen()
-                line = line.split('\f')[-1]
-            
-            import re
-            line = re.sub(r' & echo\.? & echo __CWD__:[^\s\n]*', '', line)
-
-            if "__CWD__:" in line:
-                line = line.split("__CWD__:", 1)[0]
-                self.prompt.config(text=self.get_pwd())
-            
-            if not line: continue
-            
-            try:
-                if show_colors: self.insert_ansi(line)
-                else: self.txt.insert(tk.END, ANSIParser.strip(line))
-                self.txt.see(tk.END)
-            except: pass
-            
-            self.txt.config(state=tk.DISABLED)
-        self.root.after(10, self.update_output)
-
-    def insert_ansi(self, text):
-        for type, val in ANSIParser.parse(text):
-            if type == 'text': self.txt.insert(tk.END, val, self.current_tag if hasattr(self, 'current_tag') else None)
-            elif type == 'color':
-                self.current_tag = f"ansi_{val}"
-                self.txt.tag_configure(self.current_tag, foreground=self.get_contrast_color(val))
-            elif type == 'reset': self.current_tag = None
-
-    def run(self): self.root.mainloop()
+    def run(self):
+        self.show()
 

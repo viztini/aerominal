@@ -1,5 +1,5 @@
 # [aerominal]
-## 13.7× lighter then your average Chrome tab.
+## 14.7× lighter then your average Chrome tab.
 A modular, high-performance, lightweight, and highly customizable terminal emulator for Windows and Linux.
 
 ## Features
