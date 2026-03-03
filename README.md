@@ -25,7 +25,7 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 >
 > **Aerominal is incompatible with PowerShell and WSL**, commands may break and the prompt UI does not function correctly.
 >
-> **Do not file issues or requests related to PowerShell support.**
+> **Do not file issues or requests related to PowerShell or WSL support.**
 
 *Minimum requirements: Python 3.8+*
 
