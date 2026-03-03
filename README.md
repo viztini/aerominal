@@ -21,9 +21,9 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 - `aerominal.py`: Main entry point (redirector)
 
 > [!IMPORTANT]
-> **PowerShell is not supported.**
+> **PowerShell and WSL is not supported.**
 >
-> **Aerominal is incompatible with PowerShell**, commands may break and the prompt UI does not function correctly.
+> **Aerominal is incompatible with PowerShell and WSL**, commands may break and the prompt UI does not function correctly.
 >
 > **Do not file issues or requests related to PowerShell support.**
 
