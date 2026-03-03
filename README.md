@@ -29,8 +29,6 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 
 *Minimum requirements: Python 3.8+*
 
-![example-image](./src/assets/example.png)
-
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=viztini/aerominal&type=date&legend=top-left)](https://www.star-history.com/#viztini/aerominal&type=date&legend=top-left)
