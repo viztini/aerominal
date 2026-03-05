@@ -1,4 +1,4 @@
-# [aerominal] [BETA] [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/viztini/aerominal)
+# [aerominal] [BETA] ![Security](https://snyk.io/test/github/viztini/aerominal/badge.svg?targetFile=package.json)
 
 ## 14.2× lighter then your average Chrome tab.
 A modular, high-performance, lightweight, and highly customizable terminal emulator for Windows and Linux.
@@ -15,7 +15,7 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 1. Install dependencies: `pip install -r requirements.txt`
 2. Run: `python aerominal.py`
 
-## Structure
+## Structure [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/viztini/aerominal)
 - `src/core/`: Configuration, themes, and shell managers
 - `src/ui/`: Terminal GUI components (Tkinter)
 - `src/assets/`: UI resources and icons
