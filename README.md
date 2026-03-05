@@ -1,4 +1,5 @@
-# [aerominal] [BETA]
+# [aerominal] [BETA] [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/viztini/aerominal)
+
 ## 14.2× lighter then your average Chrome tab.
 A modular, high-performance, lightweight, and highly customizable terminal emulator for Windows and Linux.
 
