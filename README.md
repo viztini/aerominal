@@ -17,7 +17,7 @@ A modular, high-performance, lightweight, and highly customizable terminal emula
 
 ## Structure [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/viztini/aerominal)
 - `src/core/`: Configuration, themes, and shell managers
-- `src/ui/`: Terminal GUI components (Tkinter)
+- `src/ui/`: Terminal GUI components (PyQt6)
 - `src/assets/`: UI resources and icons
 - `aerominal.py`: Main entry point (redirector)
 
